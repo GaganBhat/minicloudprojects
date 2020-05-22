@@ -1,3 +1,5 @@
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.rds.AmazonRDS;
 import com.amazonaws.services.rds.AmazonRDSClientBuilder;
 import com.amazonaws.services.rds.model.DBInstance;
@@ -10,7 +12,7 @@ public class RDSBackupChecker {
 
 	public static void main(String[] args) {
 		// Some test cases
-		checkRDSInstances(new String[]{"database-1", "database-2"}, 2, "06:20-06:50");
+		checkRDSInstances(new String[]{"database-5", "database-1"}, 7, "06:20-06:50");
 	}
 
 	public static void checkRDSInstances(String[] instanceIDs, int retentionPeriod, String backupWindow){
@@ -19,9 +21,23 @@ public class RDSBackupChecker {
 	}
 
 	public static void checkConfigMatch(String instanceID, int retentionPeriod, String backupWindow){
-		AmazonRDS client = AmazonRDSClientBuilder.standard().build();
-		DescribeDBInstancesRequest request = new DescribeDBInstancesRequest().withDBInstanceIdentifier(instanceID);
-		List<DBInstance> dbInstances = client.describeDBInstances(request).getDBInstances();
+
+		AmazonRDS client = null;
+		List<DBInstance> dbInstances = null;
+		DescribeDBInstancesRequest request = null;
+
+		for(Regions region : Regions.values()){
+			client = AmazonRDSClientBuilder.standard().withRegion(region).build();
+			request = new DescribeDBInstancesRequest().withDBInstanceIdentifier(instanceID);
+			try{
+				dbInstances = client.describeDBInstances(request).getDBInstances();
+				if(dbInstances.size() > 0)
+					break;
+			} catch (Exception ignored) { }
+		}
+
+
+		assert dbInstances != null;
 		if(dbInstances.isEmpty()) {
 			System.out.println("Instance " + instanceID + " does not exist");
 			return;
@@ -34,16 +50,22 @@ public class RDSBackupChecker {
 				builder
 						.append("Satisfies backup retention periodic of ")
 						.append(instance.getBackupRetentionPeriod())
-						.append("\n");
+						.append(" days\n");
+			else
+				builder.append("Does not satisfy backup retention period \n");
 
 			if(instance.getPreferredBackupWindow().equals(backupWindow))
 				builder
 						.append("Satisfies backup window of ")
 						.append(instance.getPreferredBackupWindow())
 						.append("\n");
+			else
+				builder.append("Does not satisfy backup window \n");
+
+			System.out.println(builder.toString());
 
 			} else
-				System.out.println("Instance " + instance.getDBInstanceIdentifier() + "backup disabled ");
+				System.out.println("Instance " + instance.getDBInstanceIdentifier() + " backup disabled ");
 
 	}
 

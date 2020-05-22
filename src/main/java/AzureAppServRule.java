@@ -1,4 +1,7 @@
-package PACKAGE_NAME;
-
 public class AzureAppServRule {
+
+	public static void main(String[] args) {
+
+	}
+
 }
