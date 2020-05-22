@@ -5,6 +5,7 @@ import com.amazonaws.services.rds.AmazonRDSClientBuilder;
 import com.amazonaws.services.rds.model.DBInstance;
 import com.amazonaws.services.rds.model.DescribeDBInstancesRequest;
 import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
+import com.amazonaws.services.rds.model.Filter;
 
 import java.util.List;
 
@@ -12,7 +13,7 @@ public class RDSBackupChecker {
 
 	public static void main(String[] args) {
 		// Some test cases
-		checkRDSInstances(new String[]{"database-5", "database-1"}, 7, "06:20-06:50");
+		checkRDSInstances(new String[]{"db-3XUOGWDVC3RPP7LN7TCBPF5K7Q", "db-6PXGXJHJSWYEELNVG5MKGTTNSI"}, 7, "06:20-06:50");
 	}
 
 	public static void checkRDSInstances(String[] instanceIDs, int retentionPeriod, String backupWindow){
@@ -28,14 +29,13 @@ public class RDSBackupChecker {
 
 		for(Regions region : Regions.values()){
 			client = AmazonRDSClientBuilder.standard().withRegion(region).build();
-			request = new DescribeDBInstancesRequest().withDBInstanceIdentifier(instanceID);
+			request = new DescribeDBInstancesRequest().withFilters(new Filter().withName("dbi-resource-id").withValues(instanceID));
 			try{
 				dbInstances = client.describeDBInstances(request).getDBInstances();
 				if(dbInstances.size() > 0)
 					break;
 			} catch (Exception ignored) { }
 		}
-
 
 		assert dbInstances != null;
 		if(dbInstances.isEmpty()) {
