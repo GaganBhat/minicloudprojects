@@ -7,6 +7,7 @@ import com.microsoft.rest.LogLevel;
 import java.io.File;
 import java.io.IOException;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -15,14 +16,21 @@ public class AzureAppSecureCheck {
 
 
 	public static void main(String[] args) {
-		checkServices(Arrays.asList(
-				"/subscriptions/f0643b6b-3d4f-45b4-b8bf-2a7679c85eba/resourceGroups/central-us-resources/providers/Microsoft.Web/sites/test-app-central-us",
-				"/subscriptions/f0643b6b-3d4f-45b4-b8bf-2a7679c85eba/resourcegroups/central-us-resources/providers/Microsoft.Web/sites/japanapp"
-		));
+		checkServices(
+				new ArrayList<>(Arrays.asList(
+					"/subscriptions/f0643b6b-3d4f-45b4-b8bf-2a7679c85eba/resourceGroups/central-us-resources/providers/Microsoft.Web/sites/test-app-central-us",
+					"/subscriptions/f0643b6b-3d4f-45b4-b8bf-2a7679c85eba/resourcegroups/central-us-resources/providers/Microsoft.Web/sites/japanapp"
+				)),
+				new ArrayList<>(Arrays.asList(
+					"/subscriptions/f0643b6b-3d4f-45b4-b8bf-2a7679c85eba/resourcegroups/central-us-resources/providers/Microsoft.Web/sites/japanapp"
+				))
+		);
+		System.out.println("Finished processing.");
+		System.exit(0);
 	}
 
-	public static void checkServices(List<String> resourceIDs){
-//		resourceIDs.removeAll(blacklistIDs);
+	public static void checkServices(List<String> resourceIDs, List<String> blacklistIDs){
+		resourceIDs.removeAll(blacklistIDs);
 		for(String resourceID : resourceIDs)
 			checkServiceValidity(resourceID);
 	}
