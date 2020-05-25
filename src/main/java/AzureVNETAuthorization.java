@@ -57,9 +57,9 @@ public class AzureVNETAuthorization {
 				allowsInternetInbound = true;
 
 			if(allowsInternetInbound && authorizedVNets.contains(resource.getPrimaryNetworkInterface().primaryIPConfiguration().getNetwork().id()))
-				System.out.println("Resource: " + resource.name() + " IS VALID and follows rules");
+				System.out.println("Resource: " + resource.name() + " IS COMPLIANT and follows rules");
 			else if (allowsInternetInbound)
-				System.out.println("Resource: " + resource.name() + " IS INVALID and allows internet inbound when it shouldn't!");
+				System.out.println("Resource: " + resource.name() + " IS NOT COMPLIANT and allows internet inbound when it shouldn't!");
 			else
 				System.out.println("Resource: " + resource.name() + " does not allow inbound internet");
 
