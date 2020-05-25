@@ -20,6 +20,7 @@ import java.util.Map;
 public class AzureVNETAuthorization {
 
 	public static void main(String[] args) {
+		// Some test cases
 		init(
 				new String[]{"/subscriptions/f0643b6b-3d4f-45b4-b8bf-2a7679c85eba/resourceGroups/central-us-resources/providers/Microsoft.Compute/virtualMachines/test-virtual-machine"},
 				new String[]{"/subscriptions/f0643b6b-3d4f-45b4-b8bf-2a7679c85eba/resourceGroups/central-us-resources/providers/Microsoft.Network/virtualNetworks/virtual-network"},
