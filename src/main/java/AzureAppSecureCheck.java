@@ -23,26 +23,25 @@ public class AzureAppSecureCheck {
 				)),
 				new ArrayList<>(Arrays.asList(
 					"/subscriptions/f0643b6b-3d4f-45b4-b8bf-2a7679c85eba/resourcegroups/central-us-resources/providers/Microsoft.Web/sites/japanapp"
-				))
+				)),
+				new File("/Users/gaganbhat/Documents/Programming/Keys/azureauth.properties")
 		);
 		System.out.println("Finished processing.");
 		System.exit(0);
 	}
 
-	public static void checkServices(List<String> resourceIDs, List<String> blacklistIDs){
+	public static void checkServices(List<String> resourceIDs, List<String> blacklistIDs, File pathToServicePrincipal){
 		resourceIDs.removeAll(blacklistIDs);
 		for(String resourceID : resourceIDs)
-			checkServiceValidity(resourceID);
+			checkServiceValidity(resourceID, pathToServicePrincipal);
 	}
 
-	public static void checkServiceValidity(String resourceID){
+	public static void checkServiceValidity(String resourceID, File pathToServicePrincipal){
 		Azure client = null;
 		try {
 			client = Azure.configure()
 					.withLogLevel(LogLevel.BASIC)
-					.authenticate(new File(
-							"/Users/gaganbhat/Documents/Programming/Keys/azureauth.properties"
-					))
+					.authenticate(pathToServicePrincipal)
 					.withDefaultSubscription();
 
 		} catch (IOException e) {
