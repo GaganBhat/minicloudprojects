@@ -13,8 +13,6 @@ import java.util.List;
 
 public class AzureAppSecureCheck {
 
-
-
 	public static void main(String[] args) {
 		checkServices(
 				new ArrayList<>(Arrays.asList(
