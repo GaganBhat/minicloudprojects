@@ -1,22 +1,14 @@
 
 import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.graphrbac.RoleAssignment;
-import com.microsoft.azure.management.graphrbac.RoleDefinition;
-import com.microsoft.azure.management.graphrbac.implementation.UserInner;
 import com.microsoft.graph.auth.confidentialClient.ClientCredentialProvider;
 import com.microsoft.graph.auth.enums.NationalCloud;
 import com.microsoft.graph.models.extensions.DirectoryObject;
 import com.microsoft.graph.models.extensions.DirectoryRole;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
-import com.microsoft.graph.requests.extensions.IDirectoryObjectCollectionPage;
 import com.microsoft.graph.requests.extensions.IDirectoryObjectCollectionWithReferencesPage;
 import com.microsoft.graph.requests.extensions.IDirectoryRoleCollectionPage;
 import com.microsoft.rest.LogLevel;
-import com.sun.security.auth.UserPrincipal;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -26,11 +18,13 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,45 +32,32 @@ import java.util.List;
 
 public class AzureMFACheck {
 
-	String auth_token = "";
+	private static String auth_token = "";
 
-	private static String clientId = "9713ec7c-c96e-489f-a780-6271d674863c";
-	private static String tenant = "674ebde0-b2ea-425f-a349-10ef155575c0";
+	private static final String CLIENT_ID = "9713ec7c-c96e-489f-a780-6271d674863c";
+	private static final String CLIENT_SECRET = "";
+	private static final String TENANT = "674ebde0-b2ea-425f-a349-10ef155575c0";
+	private static final String SCOPE = "https://graph.microsoft.com/.default";
 
 	public static void main(String[] args) {
 
-		System.out.println(String.format("https://login.microsoftonline.com/%s/oauth2/v2.0/token", tenant));
+		getAuthToken();
+
+
+
+
 
 		ClientCredentialProvider authorizationCodeProvider =
 				new ClientCredentialProvider(
-						clientId,
+						CLIENT_ID,
 						Arrays.asList("https://graph.microsoft.com/.default"),
-						clientSecret,
-						tenant,
+						CLIENT_SECRET,
+						TENANT,
 						NationalCloud.Global
 				);
 
 
 		IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider(authorizationCodeProvider).buildClient();
-		graphClient = (GraphServiceClient) graphClient;
-
-//		graphClient.setServiceRoot("https://graph.microsoft.com/beta/");
-//		graphClient.customRequest("privilegedRoles").buildRequest().get();
-
-		Azure azureClient = null;
-
-		try {
-			azureClient = Azure
-					.configure()
-					.withLogLevel(LogLevel.NONE)
-					.authenticate(new File("/Users/gaganbhat/Documents/Programming/Keys/azureauth.properties"))
-					.withDefaultSubscription();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-
-		assert azureClient != null;
 
 
 		IDirectoryRoleCollectionPage directoryRoleCollectionPage = graphClient.directoryRoles().buildRequest().get();
@@ -87,45 +68,60 @@ public class AzureMFACheck {
 						.get();
 
 				for(DirectoryObject object : members.getCurrentPage()){
-					System.out.println(object.getRawObject().get("displayName"));
-
+					isMFAEnabled(object.getRawObject().get("id").getAsString());
 				}
 			}
 		}
-
-		/*
-		for(UserInner user : azureClient.accessManagement().activeDirectoryUsers().inner().list())
-			for(RoleAssignment assignment : azureClient.accessManagement().roleAssignments().listByScope("/subscriptions/" +
-					azureClient.getCurrentSubscription().subscriptionId() + "/")) {
-				assignment.inner().name();
-
-
-				RoleDefinition definition = azureClient.accessManagement().roleDefinitions().getById(assignment.roleDefinitionId());
-			}
-
-		 */
 
 
 		System.exit(0);
 	}
 
-
-	public void getAuthToken(){
-		CloseableHttpClient httpclient = HttpClients.createDefault();
+	public static void getAuthToken(){
 		try {
-			HttpGet httpGet = new HttpGet(String.format("https://login.microsoftonline.com/%s/oauth2/v2.0/token", tenant));
+			CloseableHttpClient client = HttpClients.createDefault();
+			HttpPost httpPost = new HttpPost(String.format("https://login.microsoftonline.com/%s/oauth2/v2.0/token", TENANT));
 
-			CloseableHttpResponse response1 = httpclient.execute(httpGet);
-			try {
-				System.out.println(response1.getStatusLine());
-				HttpEntity entity1 = response1.getEntity();
-				// do something useful with the response body
-				// and ensure it is fully consumed
-				EntityUtils.consume(entity1);
-			} finally {
-				response1.close();
-			}
-		} catch (IOException e ){e.printStackTrace();}
+			List<NameValuePair> params = new ArrayList<>();
+			params.add(new BasicNameValuePair("grant_type", "client_credentials"));
+			params.add(new BasicNameValuePair("client_id", CLIENT_ID));
+			params.add(new BasicNameValuePair("client_secret", CLIENT_SECRET));
+			params.add(new BasicNameValuePair("scope", SCOPE));
+			httpPost.setEntity(new UrlEncodedFormEntity(params));
+
+			CloseableHttpResponse response = client.execute(httpPost);
+			assert response.getStatusLine().getStatusCode() == 200;
+
+			InputStream inputStream = response.getEntity().getContent();
+			JSONObject jsonObject = (JSONObject) new JSONParser().parse(
+					new InputStreamReader(inputStream, "UTF-8"));
+
+			auth_token = (String) jsonObject.get("access_token");
+
+			client.close();
+		} catch (Exception e ){e.printStackTrace();}
+	}
+
+	public static boolean isMFAEnabled(String displayName) {
+
+		try {
+			CloseableHttpClient client = HttpClients.createDefault();
+			HttpGet httpGet = new HttpGet(String.format(
+					"https://graph.microsoft.com/beta/reports/credentialUserRegistrationDetails?$filter=startswith(userPrincipalName,'%s')",
+					displayName));
+			httpGet.setHeader("Authorization", "Bearer " + auth_token);
+
+			CloseableHttpResponse response = client.execute(httpGet);
+
+			InputStream inputStream = response.getEntity().getContent(); //Read from a file, or a HttpRequest, or whatever.
+			JSONObject jsonObject = (JSONObject) new JSONParser().parse(
+					new InputStreamReader(inputStream, "UTF-8"));
+
+			System.out.println(jsonObject.toString());
+
+		} catch (Exception e ){e.printStackTrace();}
+
+		return false;
 	}
 
 }
