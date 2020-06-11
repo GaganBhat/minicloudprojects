@@ -99,7 +99,6 @@ public class AzureMFACheck {
 	}
 
 	public static boolean isMFAEnabled(String displayName) {
-
 		try {
 			CloseableHttpClient client = HttpClients.createDefault();
 			HttpGet httpGet = new HttpGet(String.format(
@@ -110,12 +109,21 @@ public class AzureMFACheck {
 			CloseableHttpResponse response = client.execute(httpGet);
 
 			InputStream inputStream = response.getEntity().getContent(); //Read from a file, or a HttpRequest, or whatever.
-			JSONObject jsonObject = (JSONObject) new JSONParser().parse(
+			JSONObject mainJSONResult = (JSONObject) new JSONParser().parse(
 					new InputStreamReader(inputStream, "UTF-8"));
 
-			System.out.println(jsonObject.toString());
+			String userValUnformatted = mainJSONResult.get("value").toString();
+			JSONObject userValues = (JSONObject) new JSONParser().parse(
+					userValUnformatted.substring(1, userValUnformatted.length() - 1));
 
-		} catch (Exception e ){e.printStackTrace();}
+			if(userValues.get("isMfaRegistered").equals("true"))
+				return true;
+
+
+		} catch (Exception e ){
+			System.out.println("Neither tenant is B2C or tenant doesn't have premium license possibly");
+			e.printStackTrace();
+		}
 
 		return false;
 	}
