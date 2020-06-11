@@ -43,10 +43,6 @@ public class AzureMFACheck {
 
 		getAuthToken();
 
-
-
-
-
 		ClientCredentialProvider authorizationCodeProvider =
 				new ClientCredentialProvider(
 						CLIENT_ID,
@@ -107,7 +103,7 @@ public class AzureMFACheck {
 		try {
 			CloseableHttpClient client = HttpClients.createDefault();
 			HttpGet httpGet = new HttpGet(String.format(
-					"https://graph.microsoft.com/beta/reports/credentialUserRegistrationDetails?$filter=startswith(userPrincipalName,'%s')",
+					"https://graph.microsoft.com/beta/reports/credentialUserRegistrationDetails?$filter=startswith(id,'%s')",
 					displayName));
 			httpGet.setHeader("Authorization", "Bearer " + auth_token);
 
