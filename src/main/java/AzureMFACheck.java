@@ -34,9 +34,9 @@ public class AzureMFACheck {
 
 	private static String auth_token = "";
 
-	private static final String CLIENT_ID = "9713ec7c-c96e-489f-a780-6271d674863c";
-	private static final String CLIENT_SECRET = "";
-	private static final String TENANT = "674ebde0-b2ea-425f-a349-10ef155575c0";
+	private static final String CLIENT_ID = "5883638a-eea1-4ef2-ab57-b4c8547f2696";
+	private static final String CLIENT_SECRET = "v6Nx7o27JD7-yW9sy6lWr4~PcspD_~ZbNf";
+	private static final String TENANT = "5c661468-61e8-450a-9561-52f21b84afa8";
 	private static final String SCOPE = "https://graph.microsoft.com/.default";
 
 	public static void main(String[] args) {
@@ -56,17 +56,22 @@ public class AzureMFACheck {
 		IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider(authorizationCodeProvider).buildClient();
 
 
-		IDirectoryRoleCollectionPage directoryRoleCollectionPage = graphClient.directoryRoles().buildRequest().get();
-		for(DirectoryRole role : directoryRoleCollectionPage.getCurrentPage()){
-			if(role.displayName.toLowerCase().contains("administrator")){
-				IDirectoryObjectCollectionWithReferencesPage members = graphClient.directoryRoles(role.id).members()
-						.buildRequest()
-						.get();
+		try {
+			IDirectoryRoleCollectionPage directoryRoleCollectionPage = graphClient.directoryRoles().buildRequest().get();
+			for (DirectoryRole role : directoryRoleCollectionPage.getCurrentPage()) {
+				if (role.displayName.toLowerCase().contains("administrator")) {
+					IDirectoryObjectCollectionWithReferencesPage members = graphClient.directoryRoles(role.id).members()
+							.buildRequest()
+							.get();
 
-				for(DirectoryObject object : members.getCurrentPage()){
-					isMFAEnabled(object.getRawObject().get("id").getAsString());
+					for (DirectoryObject object : members.getCurrentPage()) {
+						isMFAEnabled(object.getRawObject().get("id").getAsString());
+					}
 				}
 			}
+
+		} catch (Exception e) {
+			System.out.println("Make sure to update your permissions! \n " + e);
 		}
 
 
@@ -93,6 +98,8 @@ public class AzureMFACheck {
 					new InputStreamReader(inputStream, "UTF-8"));
 
 			auth_token = (String) jsonObject.get("access_token");
+
+			System.out.println("NOTE - AUTHENTICATION TOKEN GENERATED SUCCESSFULLY!");
 
 			client.close();
 		} catch (Exception e ){e.printStackTrace();}
