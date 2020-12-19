@@ -1,6 +1,5 @@
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class JSONTinkering {
 
@@ -33,15 +32,29 @@ public class JSONTinkering {
 					"  }\n" +
 					"}";
 
+	public static final String ROLE_POLICY_AWS =
+			"{\n" +
+					"    \"Version\": \"2012-10-17\",\n" +
+					"    \"Statement\": [\n" +
+					"        {\n" +
+					"            \"Action\": \"*\",\n" +
+					"            \"Resource\": \"*\",\n" +
+					"            \"Effect\": \"Allow\"\n" +
+					"        }\n" +
+					"    ]\n" +
+					"}";
+
 	public static void main(String[] args)  {
 
 		try {
-			JSONObject mainJSONResult = (JSONObject) new JSONParser().parse(FORCED_FAILURE);
-			String userValUnformatted = mainJSONResult.get("value").toString();
-			JSONObject userValues = (JSONObject) new JSONParser().parse(
-					userValUnformatted.substring(1, userValUnformatted.length() - 1));
+			JSONArray statements = (JSONArray) new JSONObject(ROLE_POLICY_AWS).get("Statement");
+			for (int i = 0; i < statements.length(); i++){
+				JSONObject statement = (JSONObject) statements.get(i);
+				if(statement.get("Action").equals("*") && statement.get("Resource").equals("*") && statement.get("Effect").equals("Allow")){
+					System.out.println("Admin Access");
+				}
+			}
 
-			System.out.println(userValues.get("isMfaRegistered"));
 		} catch (Exception e ) {
 			System.out.println("unfortunate " + e);
 		}
