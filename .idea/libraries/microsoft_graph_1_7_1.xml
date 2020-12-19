@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="microsoft-graph-1.7.1">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/src/main/resources/microsoft-graph-1.7.1.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
